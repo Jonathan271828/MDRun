@@ -457,63 +457,89 @@ void MorsePotential::SetMorseForceParameters( Real x , Real descentCart , Real E
   */
 
 
- Real MorsePotential::MorseEpotPair( const VecNSlice<Real>& PosA , const VecNSlice<Real>& PosB ,
-	  	                     const std::vector<std::vector<Real> >& Box ){
-	 std::vector<Real> r  =  PosB - PosA ;
-	 Real norm = VecNorm( MatVec( Box , r ) );
-	 Real ExpFactor = exp( -MorsealphaCart * ( norm - MorseEquiDistCart ) );
-	 Real Epot = MorseD * ( Real( 1.0 ) - ExpFactor ) * ( Real( 1.0 ) - ExpFactor );
-			   
-	 return Epot;
- }
+Real MorsePotential::MorseEpotPair( const VecNSlice<Real>& PosA , const VecNSlice<Real>& PosB ,
+         	                     const std::vector<std::vector<Real> >& Box ){
+        std::vector<Real> r  =  PosB - PosA ;
+        Real norm = VecNorm( MatVec( Box , r ) );
+        Real ExpFactor = exp( -MorsealphaCart * ( norm - MorseEquiDistCart ) );
+        Real Epot = MorseD * ( Real( 1.0 ) - ExpFactor ) * ( Real( 1.0 ) - ExpFactor );
+       		   
+        return Epot;
+}
 
 
 
- Real MorsePotential::MorseEpotPairPB( const VecNSlice<Real>& PosA , const VecNSlice<Real>& PosB ,
- 		                       const std::vector<std::vector<Real> >& Box ){
-	 std::vector<Real> r =
-		 get_nearest_image( PosA , PosB ) - PosA ;
+Real MorsePotential::MorseEpotPairPB( const VecNSlice<Real>& PosA , const VecNSlice<Real>& PosB ,
+		                       const std::vector<std::vector<Real> >& Box ){
+        std::vector<Real> r =
+       	 get_nearest_image( PosA , PosB ) - PosA ;
 
-	 Real norm = VecNorm( MatVec( Box , r ) );
-	 Real ExpFactor = exp( -MorsealphaCart * ( norm - MorseEquiDistCart ) );
-	 Real Epot = MorseD * ( Real( 1.0 ) - ExpFactor ) * ( Real( 1.0 ) - ExpFactor );
-	 return Epot;
- }
-
-
+        Real norm = VecNorm( MatVec( Box , r ) );
+        Real ExpFactor = exp( -MorsealphaCart * ( norm - MorseEquiDistCart ) );
+        Real Epot = MorseD * ( Real( 1.0 ) - ExpFactor ) * ( Real( 1.0 ) - ExpFactor );
+        return Epot;
+}
 
 
+/*
+ *
+ * Gravitational potential ( note there is no simulation box and no periodic boundary
+ * conditions )
+ *
+ */
+std::vector<Real> GravitationPotential::GravityPairForce( 
+                                 const VecNSlice<Real>& posA, const VecNSlice<Real>& posB,
+				 const Real massA, const Real massB ){
+
+   std::vector<Real> r = posA - posB;
+   Real norm  =  VecNorm( r );
+   norm       =  norm * norm * norm;
+   std::vector<Real> force = GravitationConstant * ( massA * massB ) * r / norm ;
+   return force;
+}
 
 
- void ComputeForces::ComputeMorsePotentialEnergyArray( const std::vector<VecNSlice<Real> >& Pos , 
-                                                        const std::vector<std::vector<Real> >& lattice ,
-							std::vector<Real>& Epot ){
-
-	 for ( size_t i = 0 ; i < Pos.size() ; i++ ){
-		 Real energy = Real(0);
-		 for ( size_t j = 0 ; j < LinkList.NNList[i].size() ; j++){
-			 VecNSlice<Real> TempPos = Pos[ LinkList.NNList[i][j] ];
-			 energy += MorseEpotPairPB( Pos[i] , TempPos , lattice ); 
-		 }
-		 Epot[i] = energy;
-	 }
- }
+Real GravitationPotential::GravityPairEnergy( 
+                        const VecNSlice<Real>& posA, const VecNSlice<Real>& posB,
+			const Real massA, const Real massB ){
+   
+   std::vector<Real> r = posA - posB;
+   Real norm   =  VecNorm( r );
+   Real energy = -GravitationConstant * ( massA * massB ) * r / norm;
+   return energy;
+}
 
 
 
- /*
-  *
-  *
-  * class is inheriting from single force types
-  * and computes total force on the considered atoms
-  *
-  *
-  */
 
- ComputeForces::ComputeForces( const std::vector<VecNSlice<Real> >& Pos , unsigned int NN ,
-		               const std::vector<std::vector<Real> >& Box ){
-	 LinkList.ComputeNNListPeriodicBound( Pos , NN , Box );
- }
+void ComputeForces::ComputeMorsePotentialEnergyArray( const std::vector<VecNSlice<Real> >& Pos , 
+                                                       const std::vector<std::vector<Real> >& lattice ,
+       						std::vector<Real>& Epot ){
+
+        for ( size_t i = 0 ; i < Pos.size() ; i++ ){
+       	 Real energy = Real(0);
+       	 for ( size_t j = 0 ; j < LinkList.NNList[i].size() ; j++){
+       		 VecNSlice<Real> TempPos = Pos[ LinkList.NNList[i][j] ];
+       		 energy += MorseEpotPairPB( Pos[i] , TempPos , lattice ); 
+       	 }
+       	 Epot[i] = energy;
+        }
+}
+
+
+/*
+ *
+ *
+ * class is inheriting from single force types
+ * and computes total force on the considered atoms
+ *
+ *
+ */
+
+ComputeForces::ComputeForces( const std::vector<VecNSlice<Real> >& Pos , unsigned int NN ,
+       	               const std::vector<std::vector<Real> >& Box ){
+        LinkList.ComputeNNListPeriodicBound( Pos , NN , Box );
+}
 
 
  // initialize force module with verlet cell list
