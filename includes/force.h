@@ -202,9 +202,30 @@ class HarmonicForce{
                              const std::vector<std::vector<Real> >& Box );
 		 Real MorseEpotPairPB( const VecNSlice<Real>& PosA , const VecNSlice<Real>& PosB ,
                                const std::vector<std::vector<Real> >& Box );
+};
 
- };
 
+
+
+
+class GravitationPotential{
+
+
+   public:
+      GravitationPotential( void ){};
+
+      std::vector<Real> GravityPairForce( const VecNSlice<Real>& posA, const VecNSlice<Real>& posB,
+	                                  const Real massA, const Real massB );
+      Real GravityPairEnergy( const VecNSlice<Real>& posA, const VecNSlice<Real>& posB,
+	                      const Real massA, const Real massB );
+
+
+
+
+   private:
+      Real GravitationConstant = 1.0;
+
+};
 
 
 
